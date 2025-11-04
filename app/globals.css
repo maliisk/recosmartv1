@@ -1,0 +1,235 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------------- App shell ---------------- */
+:root {
+  --canvas-bg: #0f1115;
+
+  /* RecoSmart tema değişkenleri (Sidebar -> Theme ile override edilir) */
+  --reco-accent: #111827;
+  --reco-card-bg: #ffffff;
+  --reco-card-border: rgba(0, 0, 0, 0.06);
+  --reco-title: #1f2937;
+  --reco-text: #374151;
+  --reco-price: #111827;
+  --reco-radius: 16px;
+  --reco-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  --reco-dot: #d1d5db;
+  --reco-arrow-bg: #ffffff;
+  --reco-badge-bg: rgba(0, 0, 0, 0.8);
+  --reco-badge-color: #ffffff;
+  --reco-font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  @apply bg-neutral-900 text-neutral-100;
+  font-feature-settings: "ss01" on, "cv01" on;
+}
+
+/* ---------------- Canvas grid & pan ---------------- */
+.canvas-infinite {
+  background-color: #0f1115;
+  background-image: radial-gradient(
+      rgba(255, 255, 255, 0.18) 1px,
+      transparent 1px
+    ),
+    radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-position: 0 0, 12px 12px;
+  background-size: 24px 24px;
+}
+.canvas-pannable {
+  cursor: grab;
+}
+.canvas-pannable.is-panning {
+  cursor: grabbing;
+}
+
+/* ---------------- Scrollbar (ince) ---------------- */
+.scroll-thin {
+  scrollbar-width: thin;
+}
+.scroll-thin::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.scroll-thin::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 9999px;
+}
+
+/* ---------------- Cards ---------------- */
+.card {
+  @apply bg-white text-neutral-900 rounded-2xl shadow-card;
+}
+
+/* =======================================================================
+   Tutorial (Guided Tour) Katmanı
+   - TourOverlay bileşeni bu sınıfları kullanır
+   ======================================================================= */
+
+/* Tam ekran arka plan (karartma) */
+.tour-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60; /* Sidebar(50) üstü, modal altı için yeterli */
+  pointer-events: none; /* tıklamayı sadece tooltip/spotlight alır */
+}
+
+/* Spotlight: hedef öğeyi vurgulayan maske */
+.tour-spotlight {
+  position: absolute;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55);
+  border-radius: 12px;
+  outline: 2px solid rgba(59, 130, 246, 0.6); /* mavi vurgu */
+  transition: all 0.25s ease;
+  pointer-events: none;
+}
+@keyframes tour-pulse {
+  0% {
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55),
+      0 0 0 0 rgba(59, 130, 246, 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55),
+      0 0 0 10px rgba(59, 130, 246, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55), 0 0 0 0 rgba(59, 130, 246, 0);
+  }
+}
+.tour-spotlight.is-pulsing {
+  animation: tour-pulse 2s ease-out infinite;
+}
+
+/* Tooltip (baloncuk) */
+.tour-tooltip {
+  position: absolute;
+  max-width: 28rem; /* ~448px */
+  z-index: 61;
+  pointer-events: auto;
+  background: #111827; /* slate-900 */
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 14px 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+}
+.tour-tooltip h4 {
+  margin: 0 0 6px 0;
+  font-weight: 600;
+  font-size: 14px;
+}
+.tour-tooltip p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Tooltip oku */
+.tour-tooltip::after {
+  content: "";
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: #111827;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  transform: rotate(45deg);
+}
+/* Ok için konum varyantları (TourOverlay gerekli klası ekler) */
+.tour-tooltip.arrow-top::after {
+  bottom: -5px;
+  left: 24px;
+}
+.tour-tooltip.arrow-bottom::after {
+  top: -5px;
+  left: 24px;
+}
+.tour-tooltip.arrow-left::after {
+  right: -5px;
+  top: 18px;
+  transform: rotate(135deg);
+}
+.tour-tooltip.arrow-right::after {
+  left: -5px;
+  top: 18px;
+  transform: rotate(-45deg);
+}
+
+/* Tooltip içi butonlar */
+.tour-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  align-items: center;
+}
+.tour-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  font-size: 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  cursor: pointer;
+}
+.tour-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+.tour-btn.primary {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+.tour-btn.primary:hover {
+  background: #1d4ed8;
+}
+
+/* Üst progress bar */
+.tour-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 62;
+  background: rgba(255, 255, 255, 0.08);
+}
+.tour-progress > span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #60a5fa, #2563eb);
+  transition: width 0.25s ease;
+}
+
+/* Tutorial modunda arayüzün “kilitli” görünmesi için hafif soluklaştırma (opsiyonel) */
+.tour-dim {
+  filter: saturate(0.85) brightness(0.95);
+}
+
+/* -----------------------------------------------------------------------
+   FIX: “Arkada ikinci mavi kart” ve halo etkisini tamamen kapat
+   ----------------------------------------------------------------------- */
+.tour-tooltip::before {
+  content: none !important; /* olası eski arka plaka/çift kartı kaldır */
+}
+.tour-spotlight {
+  background: transparent !important; /* spotlight zeminini şeffaf tut */
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55) !important; /* sadece backdrop */
+  outline: 1px solid rgba(255, 255, 255, 0.18) !important; /* ince çerçeve */
+  animation: none !important; /* halo animasyonunu kapat */
+}
+.tour-tooltip {
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.38) !important;
+  background: #111827 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
