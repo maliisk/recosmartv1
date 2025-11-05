@@ -1,97 +1,95 @@
 "use client";
-import { useMemo, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
 
+import { useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
+import { useSearchParams, useRouter } from "next/navigation";
 import { DeviceKey } from "@/lib/devices";
 import { EditorProvider } from "./EditorContext";
 import Sidebar from "./Sidebar";
 import DeviceBar from "./DeviceBar";
 import Canvas from "./Canvas";
-import TourOverlay from "./TourOverlay";
 
 export default function EditorShell() {
   const [device, setDevice] = useState<DeviceKey>("desktop");
-
-  // URL: /editor?tutorial=1
   const sp = useSearchParams();
-  const isTutorial = sp?.get("tutorial") === "1";
-  const [openTour, setOpenTour] = useState<boolean>(isTutorial);
   const router = useRouter();
 
-  // Tutorial adımları: Sidebar Section id'leriyle aynı
+  // Sayfadaki harici/önceki header'ları temizle (bizimkini hariç)
+  useEffect(() => {
+    document.querySelectorAll("header").forEach((h) => {
+      if (!(h as HTMLElement).id || (h as HTMLElement).id !== "editor-header") {
+        h.parentElement?.removeChild(h);
+      }
+    });
+  }, []);
+
+  // Kendi header'ımızın yüksekliğini ölç ve --headerH yaz
+  const headerRef = useRef<HTMLElement | null>(null);
+  const writeHeaderVar = () => {
+    const h = headerRef.current?.offsetHeight ?? 0;
+    document.documentElement.style.setProperty("--headerH", `${h}px`);
+  };
+  useEffect(() => {
+    writeHeaderVar();
+    const ro = new ResizeObserver(writeHeaderVar);
+    if (headerRef.current) ro.observe(headerRef.current);
+    const onResize = () => writeHeaderVar();
+    window.addEventListener("resize", onResize);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", onResize);
+    };
+  }, []);
+
   const steps = useMemo(
     () => [
       {
         id: "datasource",
         title: "Data Source",
-        content:
-          "XML URL girip ‘Yükle’ ile ürünleri geçici olarak editöre aktarırsın. (Demo için zorunlu değil.)",
+        content: "XML URL girip ‘Yükle’ ile ürünleri editöre çek.",
         selector: '[data-tour="datasource"]',
       },
       {
         id: "theme",
         title: "Theme",
-        content:
-          "Renk, radius, shadow ve font ayarları. Değerler widget CSS değişkenlerine yansır.",
+        content: "Renk / radius / shadow / font ayarları.",
         selector: '[data-tour="theme"]',
       },
       {
         id: "wrapper",
         title: "Wrapper",
-        content:
-          "Kapsayıcı padding/radius/shadow gibi görünüm ayarları hakkında bilgiler.",
+        content: "Kapsayıcı görünüm ayarları.",
         selector: '[data-tour="wrapper"]',
       },
       {
         id: "product",
         title: "Product",
-        content:
-          "Kartta görüntülenecek alanları (image/title/badge) açıp kapatabilirsin.",
+        content: "Kartta görüntülenecek alanları aç/kapat.",
         selector: '[data-tour="product"]',
       },
       {
         id: "price",
         title: "Price",
-        content:
-          "Fiyat modunu (indirimli/orijinal) simüle eder. Arayüzde fiyatların gösterimini etkiler.",
+        content: "Fiyat modunu simüle et.",
         selector: '[data-tour="price"]',
       },
       {
         id: "arrows",
         title: "Arrows",
-        content: "Sol/Sağ okların görünürlüğünü yönetir.",
+        content: "Sol/Sağ ok görünürlüğü.",
         selector: '[data-tour="arrows"]',
       },
       {
         id: "pagination",
         title: "Pagination",
-        content: "Alt sayfa noktalarını (bullets) aç/kapa.",
+        content: "Alt sayfa noktaları (bullets).",
         selector: '[data-tour="pagination"]',
       },
       {
         id: "anchor",
-        title: "Anchor Injection",
-        content:
-          "Preview açıkken ‘Sayfadan Seç’ ile hedef elementi işaretle; widget hedefin altına enjekte edilir.",
+        title: "Anchor",
+        content: "Preview’da element seçip widget’ı konumlandır.",
         selector: '[data-tour="anchor"]',
-      },
-      {
-        id: "who",
-        title: "Who views",
-        content: "Segment kuralları.",
-        selector: '[data-tour="who"]',
-      },
-      {
-        id: "where",
-        title: "Where views",
-        content: "Sayfa/senaryo kapsamı.",
-        selector: '[data-tour="where"]',
-      },
-      {
-        id: "when",
-        title: "When views",
-        content: "Zamanlama/planlama.",
-        selector: '[data-tour="when"]',
       },
     ],
     []
@@ -99,32 +97,38 @@ export default function EditorShell() {
 
   return (
     <EditorProvider>
-      <div className="h-[calc(100vh-64px)] w-full flex">
-        {/* Sidebar SERBEST scroll */}
-        <Sidebar />
-
-        {/* Sağ taraf SERBEST (artık kitlenmiyor) */}
-        <main className="flex-1 h-full rounded-r-2xl overflow-auto bg-neutral-800/50 border-l border-white/10">
-          <div className="flex items-center justify-between p-4 border-b border-white/10">
-            <h1 className="text-sm text-white/70">Inline • Widget</h1>
+      <div className="h-screen w-full flex flex-col bg-[#eef1f5]">
+        {/* BÜYÜK HEADER */}
+        <header
+          id="editor-header"
+          ref={headerRef}
+          className="w-full bg-white border-b border-slate-200 flex items-center justify-between px-6
+                     h-28 md:h-32 min-h-[7rem]" // görünür yüksek
+        >
+          <div className="flex items-center gap-3">
+            <Image
+              src="/logo.svg"
+              alt="Logo"
+              width={168}
+              height={34}
+              priority
+            />
+          </div>
+          <div className="[&_*]:text-slate-900 [&_*]:fill-slate-900 [&_*]:stroke-slate-900">
             <DeviceBar device={device} setDevice={setDevice} />
           </div>
-          <div className="h-[calc(100%-64px)] w-full">
-            <Canvas device={device} />
-          </div>
-        </main>
+        </header>
 
-        {openTour && (
-          <TourOverlay
-            active
-            steps={steps}
-            onClose={() => {
-              setOpenTour(false);
-              router.push("/");
-            }}
-            onFinish={() => router.push("/")}
-          />
-        )}
+        {/* İçerik alanı: dinamik yükseklik */}
+        <div
+          className="w-full flex"
+          style={{ height: "calc(100vh - var(--headerH, 0px))" }}
+        >
+          <Sidebar />
+          <main className="flex-1 h-full overflow-hidden">
+            <Canvas device={device} />
+          </main>
+        </div>
       </div>
     </EditorProvider>
   );
