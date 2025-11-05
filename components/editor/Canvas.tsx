@@ -333,33 +333,40 @@ export default function Canvas({ device }: { device: DeviceKey }) {
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const [pickMode, setPickMode] = useState(false);
   const [docReady, setDocReady] = useState(false);
-  const [srcDocHtml, setSrcDocHtml] = useState<string | null>(null);
 
+  // ---- NAVİGASYON KÖPRÜSÜ: currentUrl state'i ve postMessage dinleyicisi
+  const [currentUrl, setCurrentUrl] = useState<string | null>(null);
+
+  // preview açıldığında başlangıç URL'i
   useEffect(() => {
-    if (!showPreview || !previewUrl) return;
-    setDocReady(false);
-    setShadowRoot(null);
-    setSrcDocHtml(null);
-
-    (async () => {
-      try {
-        const res = await fetch(
-          `/api/proxy?url=${encodeURIComponent(previewUrl)}`
-        );
-        let html = await res.text();
-        if (!/name=["']viewport["']/i.test(html)) {
-          html = html.replace(
-            /<head([^>]*)>/i,
-            `<head$1><meta name="viewport" content="width=device-width, initial-scale=1">`
-          );
-        }
-        setSrcDocHtml(html);
-      } catch {
-        setSrcDocHtml("<!doctype html><html><body>Yüklenemedi.</body></html>");
-      }
-    })();
+    if (showPreview && previewUrl) {
+      setShadowRoot(null);
+      setDocReady(false);
+      setCurrentUrl(previewUrl);
+    }
   }, [showPreview, previewUrl]);
 
+  // iframe içinden gelen RECO_NAV mesajlarını yakala
+  useEffect(() => {
+    if (!showPreview) return;
+    const onMsg = (e: MessageEvent) => {
+      const d = e?.data;
+      if (!d || d.type !== "RECO_NAV" || !d.url) return;
+      setShadowRoot(null);
+      setDocReady(false);
+      setCurrentUrl(d.url as string);
+    };
+    window.addEventListener("message", onMsg);
+    return () => window.removeEventListener("message", onMsg);
+  }, [showPreview]);
+
+  // ---- iFrame: daima proxy üzerinden yükle (currentUrl bazlı)
+  const proxySrc =
+    showPreview && currentUrl
+      ? `/api/proxy?url=${encodeURIComponent(currentUrl)}`
+      : undefined;
+
+  // Pick modu tıklama dinleyicisi ve load
   useEffect(() => {
     const ifr = iframeRef.current;
     if (!ifr) return;
@@ -385,7 +392,7 @@ export default function Canvas({ device }: { device: DeviceKey }) {
       doc?.removeEventListener("click", onClick, true);
       ifr.removeEventListener("load", onLoad);
     };
-  }, [pickMode, setAnchorSelector, srcDocHtml]);
+  }, [pickMode, setAnchorSelector, proxySrc]);
 
   const ensureShadowMount = useCallback(() => {
     const ifr = iframeRef.current;
@@ -562,7 +569,7 @@ export default function Canvas({ device }: { device: DeviceKey }) {
     </div>
   );
 
-  if (showPreview && previewUrl) {
+  if (showPreview && currentUrl) {
     const isFramed = device !== "desktop";
     const frameRadius = device === "mobile" ? 24 : 16;
 
@@ -594,6 +601,7 @@ export default function Canvas({ device }: { device: DeviceKey }) {
           }
         >
           <iframe
+            key={proxySrc || device}
             ref={iframeRef}
             className="w-full h-full border-0 bg-white"
             style={
@@ -606,10 +614,9 @@ export default function Canvas({ device }: { device: DeviceKey }) {
                     height: "100%",
                   }
             }
-            srcDoc={
-              srcDocHtml ??
-              "<!doctype html><html><head><meta charset='utf-8'></head><body></body></html>"
-            }
+            src={proxySrc}
+            sandbox="allow-scripts allow-forms allow-same-origin"
+            referrerPolicy="no-referrer"
           />
           {/* Seçim butonu */}
           <button
