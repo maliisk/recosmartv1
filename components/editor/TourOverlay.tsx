@@ -132,6 +132,11 @@ export default function TourOverlay({
     zIndex: 62,
     top: rect ? Math.max(8, rect.top + rect.height / 2 - TIP_H / 2) : 120,
     left: rect ? rect.left + rect.width + PAD + 14 : 360,
+    background: "#111827",
+    color: "#fff",
+    borderRadius: 12,
+    boxShadow: "0 20px 60px rgba(2,6,23,.25)",
+    padding: 12,
   };
 
   const next = () => setIndex((i) => (i < STEPS.length - 1 ? i + 1 : i));
@@ -139,20 +144,42 @@ export default function TourOverlay({
 
   return (
     <>
-      {/* Progress bar */}
-      <div className="tour-progress">
-        <span style={{ width: `${progress}%` }} />
+      {/* Progress bar (inline stil) */}
+      <div
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: 3,
+          background: "rgba(0,0,0,.2)",
+          zIndex: 65,
+        }}
+      >
+        <span
+          style={{
+            display: "block",
+            height: "100%",
+            width: `${progress}%`,
+            background: "#0ea5e9",
+            transition: "width .2s ease",
+          }}
+        />
       </div>
 
       {/* Overlay — etkileşim kilitli DEĞİL, sadece görsel karartma */}
       <div
-        className="tour-overlay"
-        style={{ pointerEvents: "none", background: "rgba(0,0,0,.45)" }}
+        style={{
+          position: "fixed",
+          inset: 0,
+          background: "rgba(0,0,0,.45)",
+          pointerEvents: "none",
+          zIndex: 60,
+        }}
       >
-        {/* Spotlight (ikinci kart yok, sadece maske) */}
+        {/* Spotlight */}
         {rect && (
           <div
-            className="tour-spotlight"
             style={{
               position: "fixed",
               top: rect.top - PAD,
@@ -170,8 +197,8 @@ export default function TourOverlay({
         )}
 
         {/* Tooltip */}
-        <div className="tour-tooltip arrow-right" style={tooltipStyle}>
-          {/* sol ok (tek) */}
+        <div style={tooltipStyle}>
+          {/* sol ok */}
           <span
             style={{
               position: "absolute",
@@ -193,36 +220,66 @@ export default function TourOverlay({
             {STEPS[index].content}
           </p>
 
-          <div className="tour-actions" style={{ marginTop: 12 }}>
+          <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
             <button
-              className="tour-btn"
               onClick={prev}
               disabled={index === 0}
-              style={{ pointerEvents: "auto" }}
+              style={{
+                pointerEvents: "auto",
+                padding: "8px 12px",
+                borderRadius: 8,
+                border: "1px solid #334155",
+                background: index === 0 ? "#1f2937" : "transparent",
+                color: "#fff",
+                opacity: index === 0 ? 0.5 : 1,
+                cursor: index === 0 ? "not-allowed" : "pointer",
+              }}
             >
               Geri
             </button>
             {index < STEPS.length - 1 ? (
               <button
-                className="tour-btn primary"
                 onClick={next}
-                style={{ pointerEvents: "auto" }}
+                style={{
+                  pointerEvents: "auto",
+                  padding: "8px 12px",
+                  borderRadius: 8,
+                  background: "#0ea5e9",
+                  color: "#fff",
+                  border: "none",
+                  cursor: "pointer",
+                }}
               >
                 Devam Et
               </button>
             ) : (
               <button
-                className="tour-btn primary"
                 onClick={() => (onFinish ? onFinish() : onClose())}
-                style={{ pointerEvents: "auto" }}
+                style={{
+                  pointerEvents: "auto",
+                  padding: "8px 12px",
+                  borderRadius: 8,
+                  background: "#22c55e",
+                  color: "#fff",
+                  border: "none",
+                  cursor: "pointer",
+                }}
               >
                 Bitir
               </button>
             )}
             <button
-              className="tour-btn"
               onClick={onClose}
-              style={{ marginLeft: "auto", pointerEvents: "auto" }}
+              style={{
+                marginLeft: "auto",
+                pointerEvents: "auto",
+                padding: "8px 12px",
+                borderRadius: 8,
+                background: "transparent",
+                border: "1px solid #334155",
+                color: "#fff",
+                cursor: "pointer",
+              }}
             >
               Atla
             </button>

@@ -81,7 +81,6 @@ function Section(props: {
     </div>
   );
 }
-
 function Row({ children }: { children: ReactNode }) {
   return <div className="grid grid-cols-2 gap-2 items-center">{children}</div>;
 }
@@ -122,7 +121,6 @@ type Theme = {
   badgeColor: string;
   fontFamily: string;
 };
-
 const DEFAULT_THEME: Theme = {
   accent: "#0f172a",
   cardBg: "#ffffff",
@@ -139,7 +137,6 @@ const DEFAULT_THEME: Theme = {
   fontFamily:
     'ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji"',
 };
-
 function applyCssVars(th: Theme) {
   const id = "reco-theme-vars";
   let s = document.getElementById(id) as HTMLStyleElement | null;
@@ -165,7 +162,6 @@ function applyCssVars(th: Theme) {
   --reco-font:${th.fontFamily};
 }`;
 }
-
 function emitThemePatch(patch: Partial<Theme>) {
   if (typeof window !== "undefined") {
     window.dispatchEvent(
@@ -175,9 +171,16 @@ function emitThemePatch(patch: Partial<Theme>) {
 }
 
 /* ------- Sidebar ------- */
-export default function Sidebar() {
-  // Recommend artık default KAPALI
-  const [recommendOpen, setRecommendOpen] = useState(false);
+export default function Sidebar({
+  defaultRecommendOpen = false,
+}: {
+  defaultRecommendOpen?: boolean;
+}) {
+  // Recommend: editörde kapalı, tutorial modunda açık gelsin
+  const [recommendOpen, setRecommendOpen] = useState(!!defaultRecommendOpen);
+  useEffect(() => {
+    if (defaultRecommendOpen) setRecommendOpen(true);
+  }, [defaultRecommendOpen]);
 
   const [open, setOpen] = useState<Record<string, boolean>>({
     datasource: true,
@@ -265,7 +268,7 @@ export default function Sidebar() {
           label="Campaign"
         />
 
-        {/* Recommend + panel (default kapalı) */}
+        {/* Recommend + panel */}
         <div>
           <GroupHeader
             icon={<Gauge size={18} className="text-slate-600" />}
@@ -502,8 +505,7 @@ export default function Sidebar() {
                   onClick={resetTheme}
                   className="mt-2 inline-flex items-center gap-2 rounded-md bg-slate-100 hover:bg-slate-200 px-3 py-2 text-xs"
                 >
-                  <RefreshCw className="w-3.5 h-3.5" />
-                  Reset Theme
+                  <RefreshCw className="w-3.5 h-3.5" /> Reset Theme
                 </button>
               </Section>
 
