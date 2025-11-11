@@ -61,7 +61,8 @@ export default function EditorShell() {
       {
         id: "datasource",
         title: "Data Source",
-        content: "XML URL girip ‘Yükle’ ile ürünleri editöre çek.",
+        content:
+          "XML URL girip ‘Yükle’ ile ürünleri editöre çek. Site URL girip ‘Preview’ ile siteni görüntüle.",
         selector: '[data-tour="datasource"]',
       },
       {
